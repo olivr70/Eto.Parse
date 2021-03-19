@@ -55,7 +55,9 @@ namespace Eto.Parse
             get { return Scanner.LineAtIndex(index); }
         }
 
-        internal Match(string name, Parser parser, Scanner scanner, int index, int length, MatchCollection matches)
+		// Author: Olvier CHEVET
+		// Changed to public to allow extending the lib (implementing debugging tools)
+        public Match(string name, Parser parser, Scanner scanner, int index, int length, MatchCollection matches)
         {
             this.name = name;
             this.parser = parser;
@@ -65,7 +67,9 @@ namespace Eto.Parse
             this.matches = matches;
         }
 
-        internal Match(Parser parser, Scanner scanner, int index, int length, MatchCollection matches)
+		// Author: Olvier CHEVET
+		// Changed to public to allow extending the lib (implementing debugging tools)
+		public Match(Parser parser, Scanner scanner, int index, int length, MatchCollection matches)
         {
             //this.name = parser.Name;
             this.parser = parser;
@@ -163,6 +167,30 @@ namespace Eto.Parse
             : base(collection)
         {
         }
+
+		/// <summary>
+		/// Copy constructor (shallow copy)
+		/// </summary>
+		/// <remarks>
+		/// For debugging purposes (tracing and debugging grammars)
+		/// Nécessary because MatchCollection are reused. Match are not, so shallow copy is ok.
+		/// </remarks>
+		/// <author>Olivier CHEVET</author>
+		/// <param name="other">The MatchCollection to copy</param>
+		public MatchCollection(MatchCollection other) : base(other) { }
+
+		/// <summary>
+		/// Clone a MatchCollection
+		/// </summary>
+		/// <remarks>
+		/// For debugging purposes (tracing and debugging grammars)
+		/// </remarks>
+		/// <author>Olivier CHEVET</author>
+		/// <param name="other">The MatchCollection to copy</param>
+		public MatchCollection Clone()
+		{
+			return new MatchCollection(this);
+		}
 
         public IEnumerable<Match> Find(string id)
         {
