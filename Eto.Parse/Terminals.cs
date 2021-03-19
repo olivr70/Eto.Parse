@@ -51,6 +51,47 @@ namespace Eto.Parse
 			return Set(chars.ToCharArray());
 		}
 
+		/// <summary>
+		/// Creates a CharTerminal with a forces case sensitivity (whatever the default of the grammar)
+		/// </summary>
+		/// <author>Olivier CHEVET</author>
+		/// <param name="caseSensitive"></param>
+		/// <param name="chars">all accepted chars as ints</param>
+		/// <returns>A new CharTerminal (SingleCharTerminal or CharSetTerminal)</returns>
+		public static CharTerminal Set(bool caseSensitive, params int[] chars)
+		{
+			if (chars.Length == 1)
+				return new SingleCharTerminal((char)chars[0]) { CaseSensitive = caseSensitive };
+			else
+				return new CharSetTerminal(chars.Select(r => (char)r).ToArray()) { Reusable = true, CaseSensitive = caseSensitive };
+		}
+
+		/// <summary>
+		/// Creates a CharTerminal with a forces case sensitivity (whatever the default of the grammar)
+		/// </summary>
+		/// <author>Olivier CHEVET</author>
+		/// <param name="caseSensitive"></param>
+		/// <param name="chars">all accepted chars</param>
+		/// <returns>A new CharTerminal (SingleCharTerminal or CharSetTerminal)</returns>
+		public static CharTerminal Set(bool caseSensitive, params char[] chars)
+		{
+			if (chars.Length == 1)
+				return new SingleCharTerminal(chars[0]) { CaseSensitive = caseSensitive };
+			else
+				return new CharSetTerminal(chars) { CaseSensitive = caseSensitive };
+		}
+		/// <summary>
+		/// Creates a CharTerminal with a forces case sensitivity (whatever the default of the grammar)
+		/// </summary>
+		/// <author>Olivier CHEVET</author>
+		/// <param name="caseSensitive"></param>
+		/// <param name="chars">all accepted chars as a string</param>
+		/// <returns>A new CharTerminal (SingleCharTerminal or CharSetTerminal)</returns>
+		public static CharTerminal Set(bool caseSensitive, string chars)
+		{
+			return Set(caseSensitive, chars.ToCharArray());
+		}
+
 		public static CharTerminal Range(char start, char end)
 		{
 			return new CharRangeTerminal(start, end);
