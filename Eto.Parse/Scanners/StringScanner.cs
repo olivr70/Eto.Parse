@@ -38,6 +38,14 @@ namespace Eto.Parse.Scanners
 			this.end = index + length;
 		}
 
+		public override string ToString()
+		{
+			var before = value.Substring(Math.Max(0, Position - 10),Math.Min(Position, 10));
+			var after = GetContext(50);
+			return before + ">>>" + after;
+
+		}
+
 		public override int ReadChar()
 		{
 			var pos = Position;
