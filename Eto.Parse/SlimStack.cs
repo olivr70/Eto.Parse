@@ -50,6 +50,13 @@ namespace Eto.Parse
 			return base[--count];
 		}
 
+		/// <remarks>Added for tooling to debug grammars</remarks>
+		/// <returns></returns>
+		public T Peek() 
+		{
+			return count != 0 ? base[count - 1] : default(T);
+		}
+
 		public T Pop()
 		{
 			var ret = base[--count];
