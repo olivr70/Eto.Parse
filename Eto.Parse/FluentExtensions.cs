@@ -124,6 +124,22 @@ namespace Eto.Parse
 			return parser;
 		}
 
+		/// <summary>
+		/// Sets the AddError flag of targeted parser, and optionaly sets the name
+		/// </summary>
+		/// <remarks>Marks it as not reusable</remarks>
+		/// <author>Olivier CHEVET</author>
+		/// <param name="parser"></param>
+		/// <returns></returns>
+		public static T Fails<T>(this T parser, string name = null)
+			where T : Parser
+		{
+			parser.AddError = true;
+			if (name != null) { parser.Name = name;  }
+			parser.Reusable = false;
+			return parser;
+		}
+
 		public static T Separate<T>(this T parser)
 			where T: Parser
 		{
