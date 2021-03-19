@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Linq;
 
 namespace Eto.Parse
 {
@@ -12,10 +13,12 @@ namespace Eto.Parse
 	/// </remarks>
 	public class ParseArgs
 	{
+		readonly Stack<Parser> parsers = new Stack<Parser>(20);
 		readonly SlimStack<MatchCollection> nodes = new SlimStack<MatchCollection>(50);
 		readonly List<Parser> errors = new List<Parser>();
 		int childErrorIndex = -1;
 		int errorIndex = -1;
+		int ignoreErrorCounter = 0;
 		readonly Dictionary<object, object> properties = new Dictionary<object, object>();
 
 		public Dictionary<object, object> Properties { get { return properties; } }
@@ -36,6 +39,12 @@ namespace Eto.Parse
 		/// </summary>
 		/// <value>The grammar.</value>
 		public Grammar Grammar { get; private set; }
+
+		/// <summary>
+		/// Gets the IgnoreError status. It is true if any of the parents has set IgnoreErrors to true
+		/// </summary>
+		/// <value>The IgnoreError status</value>
+		public bool IgnoreErrors { get => ignoreErrorCounter != 0;  }
 
 		/// <summary>
 		/// Gets the index of the last parser error (if any), or -1 if the error has not been set
@@ -95,6 +104,7 @@ namespace Eto.Parse
 		/// <param name="parser">Parser to add the error for</param>
 		public void AddError(Parser parser)
 		{
+			if (IgnoreErrors) { return; }
 			var pos = Scanner.Position;
 			if (pos > errorIndex)
 			{
@@ -115,6 +125,7 @@ namespace Eto.Parse
 		/// </summary>
 		public void SetChildError()
 		{
+			if (IgnoreErrors) { return; }
 			var pos = Scanner.Position;
 			if (pos > childErrorIndex)
 				childErrorIndex = pos;
@@ -143,6 +154,20 @@ namespace Eto.Parse
 		public MatchCollection Pop()
 		{
 			return nodes.Pop();
+		}
+
+		/// <summary>
+		/// Returns the current MatchCollection (on top of stack)
+		/// </summary>
+		/// <author>Olivier CHEVET</author>
+		/// <remarks>
+		/// This is added only for debugging grammar purposes, to help view intermediary results even if the 
+		/// grammar does not match completetly (ex : implementing a BreakParser)
+		/// </remarks>
+		/// <returns></returns>
+		public MatchCollection Peek()
+		{
+			return nodes.Peek();
 		}
 
 		/// <summary>
@@ -292,5 +317,22 @@ namespace Eto.Parse
 				node.Add(new Match(parser, Scanner, index, length));
 			}
 		}
+
+		public void Begin(Parser parser) {
+			if (parsers != null)
+			{
+				parsers.Push(parser);
+				if (parser.IgnoreErrors) ignoreErrorCounter++;
+			}
+
+			}
+		public void End() { 
+			if (parsers != null) { 
+				var top = parsers.Pop(); 
+				if (top.IgnoreErrors) ignoreErrorCounter--;
+			}
+		}
+
+		public string Path { get => parsers != null ? string.Join("\n<",parsers.Select(x => x.Name != null ? x.Name : x.DescriptiveName)) : "";  }
 	}
 }

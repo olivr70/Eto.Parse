@@ -92,7 +92,12 @@ namespace Eto.Parse
 			}
 		}
 
-		internal bool Reusable { get; set; }
+		public bool Reusable { get; set; }
+
+		/// <summary>
+		/// if true, all errors for this Parser and sub Parsers will be ignored
+		/// </summary>
+		public bool IgnoreErrors { get; set; }
 
 		/// <summary>
 		/// Gets a name of the parser used to describe its intent, used for the error message or display tree
@@ -253,62 +258,77 @@ namespace Eto.Parse
 		/// Implementors of a Parser should implement <see cref="InnerParse"/> to perform the logic of their parser.
 		/// </remarks>
 		/// <param name="args">Parsing arguments</param>
+		/// <param name="noError">if true, no errors are set</param>
 		/// <returns>The length of the successfully matched value (can be zero), or -1 if not matched</returns>
-		public int Parse(ParseArgs args)
+		public int Parse(ParseArgs args, bool noErrors = false)
 		{
-			if (mode == ParseMode.Simple)
+			try
 			{
-				var match = InnerParse(args);
-				if (match >= 0)
-					return match;
+				args.Begin(this);
 
-				args.SetChildError();
-				return match;
-			}
-			else if (mode == ParseMode.NamedChildren)
-			{
-				args.Push();
-				var pos = args.Scanner.Position;
-				var match = InnerParse(args);
-				if (match < 0)
+				if (mode == ParseMode.Simple)
 				{
-					args.PopFailed();
-					if (AddError)
+					var match = InnerParse(args);
+					if (match >= 0)
+						return match;
+
+					if (!noErrors) args.SetChildError();
+					return match;
+				}
+				else if (mode == ParseMode.NamedChildren)
+				{
+					args.Push();
+					var pos = args.Scanner.Position;
+					var match = InnerParse(args);
+					if (match < 0)
 					{
-						args.AddError(this);
+						args.PopFailed();
+						if (!noErrors) {
+							if (AddError)
+							{
+								args.AddError(this);
+								return -1;
+							}
+							args.SetChildError();
+						}
 						return -1;
 					}
-					args.SetChildError();
-					return -1;
-				}
-				if (AddMatch)
-				{
-					args.PopMatch(this, pos, match);
+					if (AddMatch)
+					{
+						args.PopMatch(this, pos, match);
+						return match;
+					}
+					args.PopSuccess();
 					return match;
 				}
-				args.PopSuccess();
-				return match;
-			}
-			else // if (mode == ParseMode.NameOrError)
-			{
-				var pos = args.Scanner.Position;
-				var match = InnerParse(args);
-				if (match < 0)
+				else // if (mode == ParseMode.NameOrError)
 				{
-					if (!AddError)
+					var pos = args.Scanner.Position;
+					var match = InnerParse(args);
+					if (match < 0)
 					{
-						args.SetChildError();
+						if (!noErrors)
+						{
+							if (!AddError)
+							{
+								args.SetChildError();
+							}
+							else
+							{
+								args.AddError(this);
+							}
+						}
 					}
-					else
+					else if (AddMatch)
 					{
-						args.AddError(this);
+						args.AddMatch(this, pos, match);
 					}
+					return match;
 				}
-				else if (AddMatch)
-				{
-					args.AddMatch(this, pos, match);
-				}
-				return match;
+			} finally
+			{	// end this parser
+				args.End();
+
 			}
 		}
 
